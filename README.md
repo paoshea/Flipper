@@ -9,9 +9,14 @@ Flipper is a browser-based coin-toss tracker that logs every flip, measures stre
 - Persisted auto-toss settings and countdown to the next flip
 - Catch-up for up to 500 missed scheduled tosses after reopening the page
 - Lifetime heads, tails, percentages, streaks, run counts, and fairness z-score
+- Exact two-sided binomial fairness test with an explained p-value
+- A 95% Wilson score interval and optional Bayesian credible interval for heads
 - Latest milestone details for every achieved streak length from 4 through the record
 - A gold outline identifying the highest retained streak
+- Milestone timeline and lifetime frequency summaries for qualifying runs
 - A lifetime podium showing the three longest individual streaks
+- A 52-week calendar heatmap with daily toss counts and longest streaks
+- Optional education mode explaining formulas and common probability misconceptions
 - Exact probability that a run of each length has appeared by the current toss count
 - Expected-versus-observed maximal run distribution
 - Recent-history strip and detailed history list
@@ -103,6 +108,30 @@ $$
 
 A z-score is descriptive evidence, not proof that the coin or random generator is fair or unfair.
 
+### Exact fairness test
+
+Flipper also reports an exact two-sided binomial p-value under the null hypothesis that heads and tails each have probability $1/2$. It sums the probabilities of fair-coin outcomes with an imbalance at least as large as the one observed.
+
+A small p-value means the observed imbalance would be unusual if the coin were fair. It is not the probability that the coin is fair, and it does not by itself prove bias. The calculation is exact for the binomial model rather than a large-sample normal approximation.
+
+### Heads proportion intervals
+
+The Heads card always shows a 95% Wilson score interval for the underlying heads proportion. Wilson intervals remain well behaved for small samples and proportions near zero or one, unlike the basic normal interval.
+
+The optional Bayesian interval can be enabled under **Analysis**. It is a 95% equal-tailed credible interval from a $\mathrm{Beta}(H+1,T+1)$ posterior, corresponding to a uniform $\mathrm{Beta}(1,1)$ prior. Under that model, the interval contains 95% of the posterior probability for the heads proportion; this interpretation differs from a frequentist confidence interval.
+
+### Streak calendar
+
+The calendar displays 52 weeks of daily activity. Cell intensity represents the number of tosses on that date; hovering or focusing a cell shows its exact toss count and longest streak. Daily streak calculations use the browser's local calendar date and reset at midnight.
+
+### Milestone timeline and frequency
+
+The milestone panel shows a chronological timeline of the latest 24 maximal runs that reached at least four matching tosses. Its lifetime frequency summary counts how many maximal runs reached each threshold (`≥4`, `≥5`, and upward), so a run of length 6 contributes once to each threshold from 4 through 6.
+
+### Education mode
+
+Enable **Education mode** under **Analysis** to open an expandable probability guide inside the dashboard. It explains the fairness z-score and exact p-value, Wilson and Bayesian intervals, streak formulas, the law of large numbers, and why independent tosses do not make an opposite result “due” after a streak.
+
 ## Data Storage and Privacy
 
 Flipper stores its state in browser `localStorage` under the legacy key `daily-toss-v1`. The key remains unchanged so existing users retain their history after the app rename.
@@ -113,12 +142,14 @@ Flipper stores its state in browser `localStorage` under the legacy key `daily-t
 - Exported JSON files provide a portable backup, but importing is not yet supported.
 - Browser storage quotas vary. Very large histories may eventually exceed the available quota.
 
-The dolphin icon is loaded from the jsDelivr CDN. All application logic is contained in `index.html`.
+The dolphin icon is stored locally, so the interface does not depend on an image CDN. All application logic is contained in `index.html`.
 
 ## Project Structure
 
 ```text
 Flipper/
+├── assets/
+│   └── dolphin.svg # Local app and favicon artwork
 ├── index.html      # Markup, styles, probability logic, and persistence
 ├── README.md       # Project documentation
 └── NETLIFY_SETUP.md # Netlify and custom-domain deployment guide
@@ -160,7 +191,6 @@ Flipper targets current versions of Chrome, Edge, Firefox, and Safari. It requir
 - Data does not synchronize across devices or browser profiles.
 - JSON exports cannot currently be imported.
 - There is no automated test suite or continuous deployment workflow.
-- The externally hosted dolphin icon requires network access on first load.
 
 ## Possible Future Enhancements
 
@@ -168,8 +198,6 @@ The first group builds most directly on Flipper's exact probability calculations
 
 ### Priority: statistical foundations
 
-- Add an exact two-sided binomial fairness test with a clearly explained p-value
-- Show Wilson score intervals and optional Bayesian Beta posterior credible intervals for the heads proportion
 - Add the Wald-Wolfowitz runs test and lag autocorrelation checks for independence
 - Add confidence bounds around expected maximal-run counts
 - Correct milestone significance for repeated checking and multiple comparisons
@@ -210,11 +238,8 @@ Browser Background Sync does not guarantee exact periodic execution, so it canno
 
 ### User experience and visualization
 
-- Add a streak calendar heatmap with daily toss counts and longest streaks
-- Add milestone timelines and frequency summaries
 - Add user-defined streak milestones and notification thresholds
 - Support custom outcome labels such as Yes/No, Up/Down, or team names
-- Add an education mode explaining formulas, the law of large numbers, and the gambler's fallacy
 - Complete an accessibility pass covering ARIA labels, focus management, reduced motion, and remappable shortcuts
 - Add light, dark, and high-contrast themes
 - Add localization for labels, dates, numbers, and probability descriptions
@@ -231,7 +256,6 @@ Browser Background Sync does not guarantee exact periodic execution, so it canno
 
 ### Platform and development
 
-- Self-host the dolphin icon to remove the CDN dependency
 - Add unit tests for recurrences, milestone detection, and migrations
 - Add browser tests for persistence, keyboard behavior, and auto tossing
 - Add GitHub Actions for validation and GitHub Pages deployment

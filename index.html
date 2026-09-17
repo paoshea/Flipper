@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Flipper — probability-logged coin flips</title>
-<link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f42c.png" />
+<link rel="icon" type="image/svg+xml" href="assets/dolphin.svg" />
 <style>
 :root{
 --bg:#070a16;
@@ -159,6 +159,31 @@ box-shadow:0 10px 26px rgba(0,0,0,.22);
 .podium-place .run{color:var(--text);font-size:12px;font-weight:800}
 .podium-place.first .run{color:var(--gold)}
 
+/* ---------- calendar heatmap ---------- */
+.heatmap-scroll{overflow-x:auto;padding-bottom:5px}
+.heatmap-layout{display:grid;grid-template-columns:26px max-content;gap:7px;min-width:max-content}
+.heatmap-days{display:grid;grid-template-rows:repeat(7,12px);gap:3px;color:var(--muted);font-size:9px;line-height:12px}
+.heatmap-grid{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px}
+.heat-cell{width:12px;height:12px;padding:0;border:1px solid rgba(255,255,255,.04);border-radius:3px;background:#202947;cursor:pointer}
+.heat-cell:hover,.heat-cell:focus-visible{outline:2px solid var(--text);outline-offset:1px}
+.heat-cell.level-1{background:#244a65}.heat-cell.level-2{background:#27779a}
+.heat-cell.level-3{background:#35a7c5}.heat-cell.level-4{background:#5edbd3}
+.heat-cell.future{opacity:.25;cursor:default}
+.heatmap-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:9px}
+.heatmap-detail{font-size:11.5px;color:#c3cdec;min-height:16px}
+.heatmap-legend{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:9.5px}
+.heatmap-legend i{display:block;width:11px;height:11px;border-radius:3px;background:#202947}
+.heatmap-legend i:nth-of-type(2){background:#244a65}.heatmap-legend i:nth-of-type(3){background:#27779a}
+.heatmap-legend i:nth-of-type(4){background:#35a7c5}.heatmap-legend i:nth-of-type(5){background:#5edbd3}
+
+/* ---------- education ---------- */
+.education-panel details{padding:10px 0;border-top:1px solid var(--line)}
+.education-panel details:first-of-type{border-top:0;padding-top:0}
+.education-panel summary{cursor:pointer;color:var(--text);font-size:12.5px;font-weight:700;list-style-position:outside;margin-left:16px}
+.education-panel details[open] summary{color:var(--gold);margin-bottom:7px}
+.education-panel p{margin:6px 0;color:#c3cdec;font-size:11.8px;line-height:1.6}
+.education-panel .formula{display:block;margin:7px 0;padding:7px 9px;border-left:2px solid var(--gold);background:rgba(245,196,81,.06);color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;overflow-x:auto}
+
 /* ---------- strip + history ---------- */
 .strip{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .cell{width:11px;height:11px;border-radius:3px;background:#2b3459}
@@ -202,6 +227,20 @@ background:rgba(255,255,255,.03);border-left-width:3px;
 .ms-sub{font-size:11.5px;color:#c3cdec;line-height:1.55}
 .ms-sub b{color:#fff}
 .ms-time{margin-top:6px;font-size:10.5px;color:var(--muted)}
+.milestone-insights{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line);min-width:0}
+.milestone-insights>div{min-width:0}
+.insight-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.insight-head strong{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.milestone-timeline{display:flex;overflow-x:auto;padding:4px 0 7px;min-height:52px;width:100%;max-width:100%}
+.timeline-event{position:relative;flex:0 0 78px;padding:15px 3px 0;text-align:center;font-size:9.5px;color:var(--muted)}
+.timeline-event::after{content:"";position:absolute;left:0;right:0;top:5px;height:1px;background:var(--line)}
+.timeline-event::before{content:"";position:absolute;z-index:1;top:1px;left:50%;width:9px;height:9px;border-radius:50%;transform:translateX(-50%);background:var(--heads);border:2px solid var(--panel-a)}
+.timeline-event.T::before{background:var(--tails)}
+.timeline-event.record::before{background:var(--gold);box-shadow:0 0 0 2px rgba(245,196,81,.2)}
+.timeline-event b{display:block;color:var(--text);font-size:11px}
+.frequency-list{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;width:100%;max-width:100%}
+.frequency-chip{flex:0 0 auto;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);font-size:10px;color:var(--muted)}
+.frequency-chip b{color:var(--text);font-size:11px}
 .empty{color:var(--muted);font-size:12px;padding:14px 4px;line-height:1.6}
 
 /* ---------- tables ---------- */
@@ -243,7 +282,7 @@ opacity:0;transform:translateY(-14px);transition:.35s cubic-bezier(.2,1.2,.4,1);
 <div class="wrap">
 <header class="topbar">
 <div class="brand">
-<div class="logo"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f42c.png" alt="" /></div>
+<div class="logo"><img src="assets/dolphin.svg" alt="" /></div>
 <div>
 <h1>Flipper</h1>
 <p>Every flip logged · streaks scored against real probability</p>
@@ -298,11 +337,75 @@ opacity:0;transform:translateY(-14px);transition:.35s cubic-bezier(.2,1.2,.4,1);
 <div class="countdown off" id="countdown">Auto toss is off (manual only).</div>
 <p class="hint">Auto toss runs while this page is open. If it was closed past due times, missed tosses are back-filled (up to 500) so the log stays complete.</p>
 </section>
+
+<section class="panel">
+<h2>Analysis</h2>
+<label class="check-field" for="showBayesian">
+<input type="checkbox" id="showBayesian" />
+<span>Show Bayesian interval</span>
+</label>
+<label class="check-field" for="educationMode">
+<input type="checkbox" id="educationMode" aria-controls="educationPanel" />
+<span>Education mode</span>
+</label>
+<p class="hint">Adds a 95% credible interval for the heads proportion using a uniform Beta(1,1) prior.</p>
+</section>
 </div>
 
 <!-- ================= RIGHT ================= -->
 <div class="right">
 <section class="stats" id="stats"></section>
+
+<section class="panel education-panel" id="educationPanel" hidden>
+<div class="panel-head"><h2>Probability guide</h2><span class="muted">Education mode</span></div>
+<details open>
+<summary>Fairness, z-scores, and p-values</summary>
+<p>The z-score measures the heads-minus-tails difference in standard-deviation units. Values near zero are ordinary under a fair-coin model.</p>
+<span class="formula">z = (H − T) / √N</span>
+<p>The exact two-sided binomial p-value adds the probabilities of all fair-coin outcomes at least as imbalanced as the observed result. It is not the probability that the coin is fair. A small value means the result would be unusual under the fair-coin assumption.</p>
+</details>
+<details>
+<summary>Confidence and credible intervals</summary>
+<p>The 95% Wilson interval estimates plausible values for the long-run heads proportion using a frequentist procedure with good small-sample behavior. Over repeated experiments, 95% of intervals produced this way would contain the true proportion.</p>
+<p>The optional Bayesian interval uses a uniform Beta(1,1) prior and the posterior:</p>
+<span class="formula">p | data ~ Beta(H + 1, T + 1)</span>
+<p>Under that model, the displayed credible interval contains 95% of the posterior probability for the heads proportion.</p>
+</details>
+<details>
+<summary>Streak probabilities</summary>
+<p>For a fair coin, the probability that a specified ending sequence is either all heads or all tails for length k is:</p>
+<span class="formula">P(matching run of length k) = 2^(1 − k)</span>
+<p>The average wait from a fresh start until either side reaches k consecutive results is:</p>
+<span class="formula">E[Tₖ] = 2ᵏ − 1</span>
+<p>“Chance by now” is different: it considers every possible starting point and overlap in all N tosses, using an exact recurrence rather than multiplying independent chances.</p>
+</details>
+<details>
+<summary>Law of large numbers</summary>
+<p>As independent fair tosses accumulate, the heads proportion tends to move closer to 50%. This does not mean the counts must become equal, or that convergence is smooth. The absolute heads-minus-tails gap can grow while its percentage of the total shrinks.</p>
+<p>Small samples naturally vary widely. More tosses narrow the range of proportions compatible with a fair coin, which is why the Wilson interval contracts as N grows.</p>
+</details>
+<details>
+<summary>Gambler’s fallacy</summary>
+<p>A streak does not make the opposite result “due.” If tosses are independent and fair, the next toss remains 50% heads and 50% tails regardless of the preceding sequence.</p>
+<span class="formula">P(next is heads | any past sequence) = 1/2</span>
+<p>Long runs become likely somewhere in a long history, but observing one does not create a balancing force on the next toss.</p>
+</details>
+</section>
+
+<section class="panel">
+<div class="panel-head"><h2>Streak calendar</h2><span class="muted" id="heatmapMeta">Past 52 weeks</span></div>
+<div class="heatmap-scroll">
+<div class="heatmap-layout">
+<div class="heatmap-days" aria-hidden="true"><span>Sun</span><span></span><span>Tue</span><span></span><span>Thu</span><span></span><span>Sat</span></div>
+<div class="heatmap-grid" id="heatmap" aria-label="Daily toss activity for the past 52 weeks"></div>
+</div>
+</div>
+<div class="heatmap-foot">
+<div class="heatmap-detail" id="heatmapDetail">No tosses in this period.</div>
+<div class="heatmap-legend"><span>Fewer</span><i></i><i></i><i></i><i></i><i></i><span>More tosses</span></div>
+</div>
+<p class="hint">Each day’s longest streak is calculated within that local calendar day. Hover or focus a square for details.</p>
+</section>
 
 <div class="cols">
 <section class="panel">
@@ -313,6 +416,7 @@ opacity:0;transform:translateY(-14px);transition:.35s cubic-bezier(.2,1.2,.4,1);
 
 <section class="panel">
 <div class="panel-head"><h2>Streak milestones</h2><span class="muted" id="msMeta"></span></div>
+<div class="milestone-insights" id="milestoneInsights" hidden></div>
 <div class="ms-list" id="milestones"></div>
 </section>
 </div>
@@ -352,7 +456,7 @@ function defaults(){
 return {
 tosses: [],
 milestones: [],
-settings: { autoEnabled:false, mode:'minutes', seconds:5, minutes:60, nextAt:null },
+settings: { autoEnabled:false, showBayesian:false, educationMode:false, mode:'minutes', seconds:5, minutes:60, nextAt:null },
 lastResult: null
 };
 }
@@ -420,6 +524,120 @@ const val = r[n];
 if(noRunCache.size > 400) noRunCache.clear();
 noRunCache.set(key, val);
 return val;
+}
+
+function exactBinomialPValue(heads, total){
+if(total === 0) return 1;
+const k = Math.min(heads, total - heads);
+if(k * 2 === total) return 1;
+
+let logProbabilityAtK = -total * Math.log(2);
+for(let i = 1; i <= k; i++){
+logProbabilityAtK += Math.log(total - k + i) - Math.log(i);
+}
+
+let relativeTail = 1;
+let relativeTerm = 1;
+for(let i = k; i >= 1; i--){
+relativeTerm *= i / (total - i + 1);
+relativeTail += relativeTerm;
+}
+
+return Math.min(1, 2 * Math.exp(logProbabilityAtK) * relativeTail);
+}
+
+function wilsonInterval(successes, total){
+if(total === 0) return null;
+const z = 1.959963984540054;
+const zSquared = z * z;
+const proportion = successes / total;
+const denominator = 1 + zSquared / total;
+const center = (proportion + zSquared / (2 * total)) / denominator;
+const margin = z * Math.sqrt(
+proportion * (1 - proportion) / total + zSquared / (4 * total * total)
+) / denominator;
+return [Math.max(0, center - margin), Math.min(1, center + margin)];
+}
+
+function logGamma(value){
+const coefficients = [
+0.9999999999998099, 676.5203681218851, -1259.1392167224028,
+771.3234287776531, -176.6150291621406, 12.507343278686905,
+-0.13857109526572012, 9.984369578019572e-6, 1.5056327351493116e-7
+];
+if(value < 0.5){
+return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * value)) - logGamma(1 - value);
+}
+const adjusted = value - 1;
+let sum = coefficients[0];
+for(let i = 1; i < coefficients.length; i++) sum += coefficients[i] / (adjusted + i);
+const shifted = adjusted + 7.5;
+return 0.5 * Math.log(2 * Math.PI) + (adjusted + 0.5) * Math.log(shifted) - shifted + Math.log(sum);
+}
+
+function betaContinuedFraction(a, b, x){
+const maxIterations = 200;
+const epsilon = 3e-14;
+const floor = 1e-300;
+const qab = a + b;
+const qap = a + 1;
+const qam = a - 1;
+let c = 1;
+let d = 1 - qab * x / qap;
+if(Math.abs(d) < floor) d = floor;
+d = 1 / d;
+let result = d;
+
+for(let m = 1; m <= maxIterations; m++){
+const m2 = 2 * m;
+let step = m * (b - m) * x / ((qam + m2) * (a + m2));
+d = 1 + step * d;
+if(Math.abs(d) < floor) d = floor;
+c = 1 + step / c;
+if(Math.abs(c) < floor) c = floor;
+d = 1 / d;
+result *= d * c;
+
+step = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+d = 1 + step * d;
+if(Math.abs(d) < floor) d = floor;
+c = 1 + step / c;
+if(Math.abs(c) < floor) c = floor;
+d = 1 / d;
+const delta = d * c;
+result *= delta;
+if(Math.abs(delta - 1) < epsilon) break;
+}
+return result;
+}
+
+function regularizedBeta(x, a, b){
+if(x <= 0) return 0;
+if(x >= 1) return 1;
+const factor = Math.exp(
+logGamma(a + b) - logGamma(a) - logGamma(b)
++ a * Math.log(x) + b * Math.log1p(-x)
+);
+return x < (a + 1) / (a + b + 2)
+? factor * betaContinuedFraction(a, b, x) / a
+: 1 - factor * betaContinuedFraction(b, a, 1 - x) / b;
+}
+
+function betaQuantile(probability, a, b){
+let low = 0;
+let high = 1;
+for(let i = 0; i < 60; i++){
+const midpoint = (low + high) / 2;
+if(regularizedBeta(midpoint, a, b) < probability) low = midpoint;
+else high = midpoint;
+}
+return (low + high) / 2;
+}
+
+function bayesianInterval(successes, total){
+const alpha = successes + 1;
+const beta = total - successes + 1;
+return [betaQuantile(0.025, alpha, beta), betaQuantile(0.975, alpha, beta)];
 }
 
 /* =========================================================
@@ -637,6 +855,7 @@ Rendering
 ========================================================= */
 function render(){
 renderStats();
+renderHeatmap();
 renderHeadline();
 renderHistory();
 renderMilestones();
@@ -702,6 +921,9 @@ const s = computeStats();
 const N = s.total;
 const z = N ? (s.heads - s.tails) / Math.sqrt(N) : 0;
 const zAbs = Math.abs(z);
+const exactP = exactBinomialPValue(s.heads, N);
+const wilson = wilsonInterval(s.heads, N);
+const bayesian = state.settings.showBayesian ? bayesianInterval(s.heads, N) : null;
 const interp = N === 0 ? 'no data'
 : zAbs < 1.96 ? 'within normal range'
 : zAbs < 2.58 ? 'mildly unusual'
@@ -714,18 +936,93 @@ const curSub = len >= 2
 : 'every run starts somewhere';
 
 const firstTs = state.tosses.length ? state.tosses[0].ts : null;
+const headsInterval = wilson
+? `95% Wilson ${pct(wilson[0], 1)}–${pct(wilson[1], 1)}`
+: '95% Wilson —';
+const bayesianText = bayesian
+? `<br>95% Bayesian ${pct(bayesian[0], 1)}–${pct(bayesian[1], 1)}`
+: '';
 
 $('stats').innerHTML = [
 statCard('Total tosses', fmtInt(N), firstTs ? 'since ' + fmtDate(firstTs) : 'start flipping'),
-statCard('Heads', fmtInt(s.heads), pct(s.heads, N) + ' · expected 50%', 'heads'),
+statCard('Heads', fmtInt(s.heads), `${pct(s.heads, N)} · expected 50%<br>${headsInterval}${bayesianText}`, 'heads'),
 statCard('Tails', fmtInt(s.tails), pct(s.tails, N) + ' · expected 50%', 'tails'),
 statCard('Current streak', curTxt, curSub, 'gold'),
 statCard('Longest streaks', `H ${s.bestH} / T ${s.bestT}`,
 `${fmtInt(s.runs.length)} runs recorded`),
-statCard('Fairness (z-score)', (z >= 0 ? '+' : '') + z.toFixed(2),
-`|z| ${zAbs.toFixed(2)} → ${interp}`, Math.abs(z) < 1.96 ? 'good' : ''),
+statCard('Fairness (exact test)', (z >= 0 ? '+' : '') + z.toFixed(2),
+`|z| ${zAbs.toFixed(2)} → ${interp}<br>Exact p = ${fmtProb(exactP)} · if fair, chance of an imbalance at least this large`, exactP >= 0.05 ? 'good' : ''),
 streakPodium(s.runs)
 ].join('');
+}
+
+function localDateKey(date){
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+return `${year}-${month}-${day}`;
+}
+
+function dailyTossStats(tosses){
+const days = new Map();
+for(const toss of tosses){
+const date = new Date(toss.ts);
+const key = localDateKey(date);
+let day = days.get(key);
+if(!day){
+day = { count:0, heads:0, tails:0, currentRes:null, currentLen:0, bestRes:null, bestLen:0 };
+days.set(key, day);
+}
+day.count++;
+if(toss.r === 'H') day.heads++; else day.tails++;
+if(toss.r === day.currentRes) day.currentLen++;
+else { day.currentRes = toss.r; day.currentLen = 1; }
+if(day.currentLen >= day.bestLen){
+day.bestLen = day.currentLen;
+day.bestRes = toss.r;
+}
+}
+return days;
+}
+
+function heatmapDescription(key, day){
+const date = new Date(`${key}T12:00:00`);
+const label = date.toLocaleDateString(undefined, { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+if(!day || !day.count) return `${label} · no tosses`;
+return `${label} · ${day.count.toLocaleString()} toss${day.count === 1 ? '' : 'es'} · longest ${day.bestLen} × ${sideName(day.bestRes)}`;
+}
+
+function renderHeatmap(){
+const days = dailyTossStats(state.tosses);
+const today = new Date();
+today.setHours(0,0,0,0);
+const start = new Date(today);
+start.setDate(start.getDate() - start.getDay() - 51 * 7);
+
+const visible = [];
+for(let offset = 0; offset < 52 * 7; offset++){
+const date = new Date(start);
+date.setDate(start.getDate() + offset);
+visible.push({ date, key:localDateKey(date), day:days.get(localDateKey(date)) });
+}
+const maxCount = Math.max(1, ...visible.map(item => item.day?.count || 0));
+let latestActive = null;
+
+$('heatmap').innerHTML = visible.map(item => {
+const future = item.date > today;
+const count = item.day?.count || 0;
+if(count && !future) latestActive = item;
+const level = count ? Math.max(1, Math.ceil(count / maxCount * 4)) : 0;
+const description = heatmapDescription(item.key, item.day);
+return `<button class="heat-cell level-${level}${future ? ' future' : ''}" type="button" data-date="${item.key}" aria-label="${description}" title="${description}"${future ? ' disabled' : ''}></button>`;
+}).join('');
+
+const periodStart = start.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+const periodEnd = today.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+$('heatmapMeta').textContent = `${periodStart} – ${periodEnd}`;
+$('heatmapDetail').textContent = latestActive
+? heatmapDescription(latestActive.key, latestActive.day)
+: 'No tosses in this period.';
 }
 
 function renderHistory(){
@@ -775,12 +1072,40 @@ $('historyMeta').textContent = N
 function renderMilestones(){
 const el = $('milestones');
 const all = state.milestones;
-$('msMeta').textContent = all.length ? `${all.length} levels retained` : '';
+const insights = $('milestoneInsights');
+const qualifyingRuns = computeStats().runs.filter(run => run.len >= 4);
+$('msMeta').textContent = qualifyingRuns.length
+? `${qualifyingRuns.length} qualifying run${qualifyingRuns.length === 1 ? '' : 's'}`
+: '';
 
 if(!all.length){
+insights.hidden = true;
 el.innerHTML = '<div class="empty">No streak milestones yet.<br>The latest run at each length is retained from <b>4 in a row</b> upward.</div>';
 return;
 }
+
+const recordLength = Math.max(...qualifyingRuns.map(run => run.len));
+const recentRuns = qualifyingRuns.slice(-24);
+const timeline = recentRuns.map(run => {
+const description = `${run.len} × ${sideName(run.res)} ended at toss #${run.end.i.toLocaleString()} · ${fmtDate(run.end.ts)}`;
+return `<div class="timeline-event ${run.res} ${run.len === recordLength ? 'record' : ''}" title="${description}">
+<b>${run.len} × ${run.res}</b><span>#${run.end.i.toLocaleString()}</span>
+</div>`;
+}).join('');
+const frequencies = [];
+for(let len = 4; len <= recordLength; len++){
+const count = qualifyingRuns.filter(run => run.len >= len).length;
+frequencies.push(`<span class="frequency-chip" title="Runs reaching at least ${len}"><b>≥${len}</b> ${count.toLocaleString()}</span>`);
+}
+insights.hidden = false;
+insights.innerHTML = `<div>
+<div class="insight-head"><strong>Timeline</strong><span class="muted">${recentRuns.length === qualifyingRuns.length ? 'all' : `latest ${recentRuns.length}`} qualifying runs</span></div>
+<div class="milestone-timeline">${timeline}</div>
+</div>
+<div>
+<div class="insight-head"><strong>Frequency</strong><span class="muted">lifetime runs reaching each level</span></div>
+<div class="frequency-list">${frequencies.join('')}</div>
+</div>`;
 
 el.innerHTML = all.map(m => {
 const rare = m.pByNow < 0.05;
@@ -863,6 +1188,9 @@ $('runs').innerHTML = html;
 
 function renderAutoControls(){
 $('autoEnabled').checked = state.settings.autoEnabled;
+$('showBayesian').checked = state.settings.showBayesian;
+$('educationMode').checked = state.settings.educationMode;
+$('educationPanel').hidden = !state.settings.educationMode;
 $('freqMode').value = state.settings.mode;
 $('freqSeconds').value = state.settings.seconds;
 $('freqMinutes').value = state.settings.minutes;
@@ -892,6 +1220,24 @@ Events
 ========================================================= */
 $('btnToss').addEventListener('click', () => doToss('manual'));
 
+function showHeatmapDetail(event){
+const cell = event.target.closest('.heat-cell');
+if(cell && !cell.disabled) $('heatmapDetail').textContent = cell.getAttribute('aria-label');
+}
+$('heatmap').addEventListener('mouseover', showHeatmapDetail);
+$('heatmap').addEventListener('focusin', showHeatmapDetail);
+$('heatmap').addEventListener('click', showHeatmapDetail);
+
+$('showBayesian').addEventListener('change', () => {
+state.settings.showBayesian = $('showBayesian').checked;
+save();
+renderStats();
+});
+$('educationMode').addEventListener('change', () => {
+state.settings.educationMode = $('educationMode').checked;
+save();
+renderAutoControls();
+});
 $('autoEnabled').addEventListener('change', applyFrequency);
 $('freqMode').addEventListener('change', applyFrequency);
 $('freqSeconds').addEventListener('change', applyFrequency);
