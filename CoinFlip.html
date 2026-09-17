@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flipper — probability-logged coin flips</title>
+<link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f42c.png" />
+<style>
+:root{
+--bg:#070a16;
+--panel-a:rgba(27,37,71,.92);
+--panel-b:rgba(16,23,47,.92);
+--line:#26315a;
+--text:#e8edff;
+--muted:#8b97bd;
+--gold:#f5c451;
+--heads:#4ea8ff;
+--tails:#ff6b8b;
+--good:#3ddc97;
+--danger:#ff5f6d;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+margin:0;
+font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+color:var(--text);
+background:
+radial-gradient(1200px 700px at 18% -12%, #1b2552 0%, transparent 60%),
+radial-gradient(900px 600px at 95% 0%, #2a1b45 0%, transparent 55%),
+linear-gradient(180deg,#0a1024 0%, #070a16 100%);
+background-attachment:fixed;
+min-height:100vh;
+}
+.wrap{max-width:1300px;margin:0 auto;padding:22px 18px 70px}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{
+width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;
+background:linear-gradient(160deg,#2b3768,#141c3a);
+border:1px solid var(--line);
+box-shadow:0 8px 24px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.07);
+}
+.logo img{width:34px;height:34px;object-fit:contain}
+.brand h1{margin:0;font-size:21px;letter-spacing:.2px}
+.brand p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.actions{display:flex;gap:10px}
+.btn{
+border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);
+padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;
+transition:.18s;
+}
+.btn:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
+.btn.danger{color:#ffc9cf;border-color:#5a2733;background:rgba(255,95,109,.08)}
+.btn.danger:hover{background:rgba(255,95,109,.18)}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:365px 1fr;gap:16px;align-items:start}
+.left{display:grid;gap:16px;position:sticky;top:16px}
+.right{display:grid;gap:16px;min-width:0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}
+@media (max-width:1050px){ .grid{grid-template-columns:1fr} .left{position:static} }
+@media (max-width:800px){ .cols{grid-template-columns:1fr} }
+
+.panel{
+background:linear-gradient(180deg,var(--panel-a),var(--panel-b));
+border:1px solid var(--line);border-radius:16px;padding:16px;
+box-shadow:0 12px 34px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.04);
+min-width:0;
+}
+.panel h2{margin:0 0 12px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.panel-head h2{margin:0}
+.muted{color:var(--muted);font-size:11.5px}
+.hint{margin:10px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+
+/* ---------- coin ---------- */
+.toss{text-align:center}
+.coin-stage{perspective:1000px;display:grid;place-items:center;padding:6px 0 2px;position:relative}
+.coin-stage::after{
+content:"";position:absolute;bottom:2px;width:110px;height:16px;border-radius:50%;
+background:radial-gradient(ellipse at center, rgba(0,0,0,.55), transparent 70%);
+filter:blur(2px);
+}
+.coin-wrap{width:140px;height:140px;transition:transform .3s}
+.coin-wrap.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.09)}100%{transform:scale(1)}}
+.coin{
+position:relative;width:140px;height:140px;transform-style:preserve-3d;
+transition:transform 1.15s cubic-bezier(.22,.68,.28,1);
+will-change:transform;
+}
+.face{
+position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;
+font-size:54px;font-weight:800;backface-visibility:hidden;
+box-shadow:inset 0 0 0 7px rgba(255,255,255,.14), 0 14px 34px rgba(0,0,0,.5);
+letter-spacing:-2px;
+}
+.face.heads{background:radial-gradient(circle at 32% 26%, #ffeeb5, #f3ba3c 52%, #a9761a);color:#5a3c05}
+.face.tails{background:radial-gradient(circle at 32% 26%, #dbe9ff, #7fa9e8 52%, #35619f);color:#0f2547;transform:rotateY(180deg)}
+
+.result-line{margin:16px 0 12px;font-size:13px;color:var(--muted);min-height:19px}
+.result-line b{color:var(--text)}
+.result-line b.H{color:var(--heads)}
+.result-line b.T{color:var(--tails)}
+
+.toss-btn{
+width:100%;padding:15px 18px;border-radius:14px;border:1px solid #6b5312;cursor:pointer;
+background:linear-gradient(180deg,#f8d271,#e0a92e);color:#2a1d02;
+font-size:15px;font-weight:800;letter-spacing:.4px;
+box-shadow:0 10px 26px rgba(224,169,46,.28), inset 0 1px 0 rgba(255,255,255,.5);
+transition:.15s;
+}
+.toss-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(224,169,46,.4)}
+.toss-btn:active{transform:translateY(0) scale(.985)}
+
+.streak-badge{
+margin-top:12px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:600;
+background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);
+}
+.streak-badge.H{color:#bfe0ff;border-color:#2c4a75;background:rgba(78,168,255,.1)}
+.streak-badge.T{color:#ffc4d1;border-color:#6b3040;background:rgba(255,107,139,.1)}
+
+/* ---------- form fields ---------- */
+.field{display:grid;gap:6px;margin-bottom:12px}
+.field label{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.check-field{display:flex;align-items:center;gap:9px;margin-bottom:12px;color:var(--text);font-size:13px;font-weight:700;cursor:pointer}
+.check-field input{width:17px;height:17px;margin:0;accent-color:var(--good)}
+select,input[type=number]{
+width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+background:#0e1530;color:var(--text);font-size:13.5px;font-family:inherit;outline:none;
+}
+select:focus,input:focus{border-color:#4a63b0;box-shadow:0 0 0 3px rgba(78,120,255,.15)}
+.countdown{
+margin-top:4px;padding:11px 13px;border-radius:10px;font-size:13px;
+background:rgba(61,220,151,.08);border:1px solid #1f5c45;color:#a9f2cf;
+}
+.countdown.off{background:rgba(255,255,255,.03);border-color:var(--line);color:var(--muted)}
+.countdown strong{color:#fff;font-variant-numeric:tabular-nums}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:12px}
+.stat{
+background:linear-gradient(180deg,var(--panel-a),var(--panel-b));
+border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+box-shadow:0 10px 26px rgba(0,0,0,.22);
+}
+.stat .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.stat .value{font-size:23px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
+.stat .value.heads{color:var(--heads)} .stat .value.tails{color:var(--tails)}
+.stat .value.gold{color:var(--gold)} .stat .value.good{color:var(--good)}
+.stat .sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+
+/* ---------- strip + history ---------- */
+.strip{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.cell{width:11px;height:11px;border-radius:3px;background:#2b3459}
+.cell.H{background:linear-gradient(180deg,#6bbcff,#2f86e0)}
+.cell.T{background:linear-gradient(180deg,#ff8ba3,#e04a6b)}
+.cell.new{animation:cellIn .35s ease}
+@keyframes cellIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+
+.history-list{max-height:430px;overflow:auto;padding-right:4px}
+.history-list::-webkit-scrollbar,.ms-list::-webkit-scrollbar{width:8px}
+.history-list::-webkit-scrollbar-thumb,.ms-list::-webkit-scrollbar-thumb{background:#2a3560;border-radius:8px}
+.hrow{
+display:grid;grid-template-columns:58px 30px 1fr auto;align-items:center;gap:9px;
+padding:7px 9px;border-radius:9px;font-size:12px;border:1px solid transparent;
+}
+.hrow:hover{background:rgba(255,255,255,.04);border-color:var(--line)}
+.hrow .idx{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px}
+.chip{
+width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+font-weight:800;font-size:12.5px;
+}
+.chip.H{background:rgba(78,168,255,.16);color:#8fcaff;border:1px solid #2b5588}
+.chip.T{background:rgba(255,107,139,.16);color:#ff9db3;border:1px solid #7a3346}
+.hrow .hstreak{color:var(--muted);font-size:11.5px}
+.hrow .hstreak b{color:var(--text)}
+.hrow .htime{color:var(--muted);font-size:10.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ---------- milestones ---------- */
+.ms-list{max-height:470px;overflow:auto;padding-right:4px;display:grid;gap:10px}
+.ms{
+border-radius:12px;padding:11px 13px;border:1px solid var(--line);
+background:rgba(255,255,255,.03);border-left-width:3px;
+}
+.ms.H{border-left-color:var(--heads)} .ms.T{border-left-color:var(--tails)}
+.ms.rare{background:linear-gradient(90deg,rgba(245,196,81,.13),rgba(255,255,255,.02));border-color:#6b5312}
+.ms-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.ms-title{font-size:13px;font-weight:800;letter-spacing:.2px}
+.ms.H .ms-title{color:#9ed2ff} .ms.T .ms-title{color:#ffa9bd}
+.ms-idx{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ms-sub{font-size:11.5px;color:#c3cdec;line-height:1.55}
+.ms-sub b{color:#fff}
+.ms-time{margin-top:6px;font-size:10.5px;color:var(--muted)}
+.empty{color:var(--muted);font-size:12px;padding:14px 4px;line-height:1.6}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto}
+.prob-table{width:100%;border-collapse:collapse;font-size:11.8px}
+.prob-table th{
+text-align:right;padding:7px 8px;color:var(--muted);font-weight:700;
+text-transform:uppercase;letter-spacing:.07em;font-size:9.8px;border-bottom:1px solid var(--line);
+}
+.prob-table th:first-child{text-align:left}
+.prob-table td{padding:7px 8px;text-align:right;border-bottom:1px solid rgba(38,49,90,.5);font-variant-numeric:tabular-nums}
+.prob-table td:first-child{text-align:left;font-weight:800;color:var(--gold)}
+.prob-table tr.hit td{background:rgba(61,220,151,.07)}
+.prob-table tr.hit td:first-child{color:var(--good)}
+
+/* ---------- runs ---------- */
+.run-row{margin-bottom:10px}
+.run-head{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px}
+.run-head .lbl{color:var(--text);font-weight:700}
+.run-head .exp{color:var(--muted);font-size:10.5px}
+.bar{height:9px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#4ea8ff,#8f7bff);transition:width .4s}
+.bar i.over{background:linear-gradient(90deg,#f5c451,#ff8a4c)}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99;display:grid;gap:8px;width:min(460px,92vw)}
+.toast{
+background:linear-gradient(180deg,#2a2410,#1a1608);border:1px solid #6b5312;
+border-radius:13px;padding:12px 15px;font-size:12.5px;color:#ffe6ab;
+box-shadow:0 16px 40px rgba(0,0,0,.5);
+opacity:0;transform:translateY(-14px);transition:.35s cubic-bezier(.2,1.2,.4,1);
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast b{color:#fff}
+.toast .t-sub{color:#d8bd7e;font-size:11px;margin-top:3px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="topbar">
+<div class="brand">
+<div class="logo"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f42c.png" alt="" /></div>
+<div>
+<h1>Flipper</h1>
+<p>Every flip logged · streaks scored against real probability</p>
+</div>
+</div>
+<div class="actions">
+<button class="btn" id="btnExport">Export JSON</button>
+<button class="btn danger" id="btnReset">Reset</button>
+</div>
+</header>
+
+<div class="grid">
+<!-- ================= LEFT ================= -->
+<div class="left">
+<section class="panel toss">
+<div class="coin-stage">
+<div class="coin-wrap" id="coinWrap">
+<div class="coin" id="coin">
+<div class="face heads"><span>H</span></div>
+<div class="face tails"><span>T</span></div>
+</div>
+</div>
+</div>
+<div class="result-line" id="resultLine">No tosses yet — flip to begin.</div>
+<button class="toss-btn" id="btnToss">Toss coin</button>
+<div class="streak-badge" id="streakBadge">Current streak: —</div>
+</section>
+
+<section class="panel">
+<h2>Auto toss</h2>
+<label class="check-field" for="autoEnabled">
+<input type="checkbox" id="autoEnabled" />
+<span>On - Auto flips</span>
+</label>
+<div class="field">
+<label for="freqMode">Frequency</label>
+<select id="freqMode">
+<option value="seconds">Every N seconds</option>
+<option value="minutes">Every N minutes</option>
+<option value="hourly">Hourly</option>
+<option value="daily">Daily</option>
+</select>
+</div>
+<div class="field" id="secondsField" hidden>
+<label for="freqSeconds">Seconds between tosses</label>
+<input type="number" id="freqSeconds" min="1" max="86400" step="1" value="5" />
+</div>
+<div class="field" id="minutesField" hidden>
+<label for="freqMinutes">Minutes between tosses</label>
+<input type="number" id="freqMinutes" min="1" max="10080" step="1" value="60" />
+</div>
+<div class="countdown off" id="countdown">Auto toss is off (manual only).</div>
+<p class="hint">Auto toss runs while this page is open. If it was closed past due times, missed tosses are back-filled (up to 500) so the log stays complete.</p>
+</section>
+</div>
+
+<!-- ================= RIGHT ================= -->
+<div class="right">
+<section class="stats" id="stats"></section>
+
+<div class="cols">
+<section class="panel">
+<div class="panel-head"><h2>History</h2><span class="muted" id="historyMeta"></span></div>
+<div class="strip" id="strip"></div>
+<div class="history-list" id="historyList"></div>
+</section>
+
+<section class="panel">
+<div class="panel-head"><h2>Streak milestones</h2><span class="muted" id="msMeta"></span></div>
+<div class="ms-list" id="milestones"></div>
+</section>
+</div>
+
+<div class="cols">
+<section class="panel">
+<h2>Streak probability table</h2>
+<div class="table-wrap">
+<table class="prob-table" id="probTable"></table>
+</div>
+<p class="hint">“Chance by now” = probability that at least one run of that length would have appeared <em>somewhere</em> in your N tosses (exact calculation, not an approximation).</p>
+</section>
+
+<section class="panel">
+<h2>Run-length distribution</h2>
+<div id="runs"></div>
+<p class="hint">A “run” is a maximal block of identical results. Run lengths in a fair coin follow a geometric distribution with p = ½.</p>
+</section>
+</div>
+</div>
+</div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* =========================================================
+Flipper — core
+========================================================= */
+const KEY = 'daily-toss-v1';
+const MILESTONES = [3,4,5,6,7,8,9,10,12,14,16,18,20,25,30,35,40,50,60,75,100];
+const MAX_CATCHUP = 500;
+
+const $ = id => document.getElementById(id);
+
+/* ---------- state ---------- */
+function defaults(){
+return {
+tosses: [],
+milestones: [],
+settings: { autoEnabled:false, mode:'minutes', seconds:5, minutes:60, nextAt:null },
+lastResult: null
+};
+}
+function load(){
+try{
+const raw = localStorage.getItem(KEY);
+if(!raw) return defaults();
+const s = JSON.parse(raw);
+const d = defaults();
+const loaded = { ...d, ...s, settings:{ ...d.settings, ...(s.settings||{}) } };
+if(typeof s.settings?.autoEnabled !== 'boolean'){
+loaded.settings.autoEnabled = loaded.settings.mode !== 'none';
+}
+if(loaded.settings.mode === 'none') loaded.settings.mode = 'minutes';
+loaded.milestones = loaded.milestones.map(m => ({
+...m,
+expectedWait: Math.pow(2, m.len) - 1
+}));
+return loaded;
+}catch(e){ return defaults(); }
+}
+function save(){
+try{
+localStorage.setItem(KEY, JSON.stringify({
+tosses: state.tosses,
+milestones: state.milestones,
+settings: state.settings,
+lastResult: state.lastResult
+}));
+}catch(e){ /* quota exceeded — silently keep in memory */ }
+}
+
+let state = load();
+let rotation = 0;
+let lastMilestone = null;
+
+/* =========================================================
+Probability helpers
+========================================================= */
+const noRunCache = new Map();
+
+/**
+* Exact probability that NO run of k consecutive identical results
+* appears in n fair-coin tosses.
+* Recurrence: r(n) = Σ_{j=1..k-1} r(n-j) · 2^-j (r(i)=1 for i<k)
+*/
+function probNoRun(n, k){
+if(k <= 1) return 0;
+if(n < k) return 1;
+const key = n + '|' + k;
+if(noRunCache.has(key)) return noRunCache.get(key);
+
+const r = new Float64Array(n + 1);
+for(let i = 0; i <= n; i++) r[i] = 1; // valid while i < k
+const half = new Float64Array(k);
+let p = 0.5;
+for(let j = 1; j <= k - 1; j++){ half[j] = p; p *= 0.5; }
+
+for(let i = k; i <= n; i++){
+let s = 0;
+for(let j = 1; j <= k - 1; j++) s += r[i - j] * half[j];
+r[i] = s;
+}
+const val = r[n];
+if(noRunCache.size > 400) noRunCache.clear();
+noRunCache.set(key, val);
+return val;
+}
+
+/* =========================================================
+Formatting
+========================================================= */
+const fmtInt = x => Math.round(x).toLocaleString();
+const pct = (a,b) => b ? (a/b*100).toFixed(2) + '%' : '0.00%';
+
+function fmtProb(p){
+if(!isFinite(p)) return '—';
+if(p >= 0.9995) return '≈100%';
+if(p >= 0.01) return (p*100).toFixed(2) + '%';
+if(p >= 0.0001) return (p*100).toFixed(4) + '%';
+return (p*100).toExponential(2) + '%';
+}
+function oneIn(p){
+if(!(p > 0)) return '—';
+const inv = 1 / p;
+if(inv < 1000) return '1 in ' + (inv >= 100 ? Math.round(inv) : inv.toFixed(1));
+if(inv < 1e15) return '1 in ' + Math.round(inv).toLocaleString();
+return '1 in ' + inv.toExponential(2).replace('e+','×10^');
+}
+function fmtDate(ts){
+return new Date(ts).toLocaleString(undefined,
+{month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function fmtTime(ts){
+return new Date(ts).toLocaleTimeString(undefined,
+{hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+function sideName(r){ return r === 'H' ? 'HEADS' : 'TAILS'; }
+
+/* =========================================================
+Core stats
+========================================================= */
+function computeStats(){
+const t = state.tosses;
+let heads = 0, tails = 0;
+for(let i = 0; i < t.length; i++) (t[i].r === 'H' ? heads++ : tails++);
+
+const runs = [];
+let curRes = null, curLen = 0;
+for(let i = 0; i < t.length; i++){
+const r = t[i].r;
+if(r === curRes) curLen++;
+else { if(curRes) runs.push({ res:curRes, len:curLen }); curRes = r; curLen = 1; }
+}
+if(curRes) runs.push({ res:curRes, len:curLen });
+
+let bestH = 0, bestT = 0;
+for(const r of runs){
+if(r.res === 'H'){ if(r.len > bestH) bestH = r.len; }
+else { if(r.len > bestT) bestT = r.len; }
+}
+return { total:t.length, heads, tails, runs, bestH, bestT };
+}
+
+function currentStreak(){
+const t = state.tosses;
+if(!t.length) return { len:0, res:null };
+const res = t[t.length - 1].r;
+let len = 0;
+for(let i = t.length - 1; i >= 0 && t[i].r === res; i--) len++;
+return { len, res };
+}
+
+/* =========================================================
+Toss engine
+========================================================= */
+function addToss(mode, ts, animate){
+const r = Math.random() < 0.5 ? 'H' : 'T';
+const prev = state.tosses[state.tosses.length - 1];
+const idx = (prev ? prev.i : 0) + 1;
+
+const t = { i: idx, r, ts, m: mode };
+state.tosses.push(t);
+state.lastResult = r;
+
+if(animate) animateCoin(r);
+checkMilestone(t);
+return t;
+}
+
+function checkMilestone(t){
+const { len, res } = currentStreak();
+if(!MILESTONES.includes(len)) return;
+
+const N = state.tosses.length;
+const pRun = Math.pow(2, 1 - len); // P(this exact run of `len` identical)
+const pByNow = 1 - probNoRun(N, len); // P(any run ≥ len somewhere in N tosses)
+const expectedRuns = Math.max(0, N - len + 1) * pRun;
+const expectedWait = Math.pow(2, len) - 1; // mean tosses until either side reaches `len`
+
+const m = {
+id: idx0(t) + '-' + len,
+ts: t.ts, len, res, N, idx: t.i,
+pRun, pByNow, expectedRuns, expectedWait
+};
+state.milestones.push(m);
+if(state.milestones.length > 1000) state.milestones.splice(0, state.milestones.length - 1000);
+lastMilestone = m;
+}
+function idx0(t){ return t.i; }
+
+function doToss(mode){
+lastMilestone = null;
+addToss(mode || 'manual', Date.now(), true);
+save();
+render();
+if(lastMilestone) toast(lastMilestone);
+}
+
+/* ---------- coin animation ---------- */
+function animateCoin(result){
+const target = result === 'H' ? 0 : 180;
+const cur = ((rotation % 360) + 360) % 360;
+const delta = ((target - cur) % 360 + 360) % 360;
+rotation += 360 * 4 + delta;
+
+const coin = $('coin');
+coin.style.transform = `rotateY(${rotation}deg)`;
+
+const wrap = $('coinWrap');
+wrap.classList.remove('pop');
+void wrap.offsetWidth;
+wrap.classList.add('pop');
+}
+
+/* =========================================================
+Auto-toss scheduler
+========================================================= */
+function intervalMs(){
+const s = state.settings;
+if(!s.autoEnabled) return 0;
+if(s.mode === 'seconds') return Math.max(1, s.seconds) * 1000;
+if(s.mode === 'minutes') return Math.max(1, s.minutes) * 60000;
+if(s.mode === 'hourly') return 3600000;
+if(s.mode === 'daily') return 86400000;
+return 0;
+}
+
+function tick(){
+updateCountdown();
+const iv = intervalMs();
+if(!iv) return;
+
+const now = Date.now();
+if(state.settings.nextAt == null){ state.settings.nextAt = now + iv; save(); return; }
+if(state.settings.nextAt > now) return;
+
+lastMilestone = null;
+let made = 0;
+while(state.settings.nextAt <= now && made < MAX_CATCHUP){
+addToss('auto', state.settings.nextAt, false);
+state.settings.nextAt += iv;
+made++;
+}
+if(made >= MAX_CATCHUP) state.settings.nextAt = now + iv; // don't spiral
+
+if(made > 0){
+animateCoin(state.lastResult);
+save();
+render();
+if(lastMilestone) toast(lastMilestone);
+}
+}
+
+function updateCountdown(){
+const el = $('countdown');
+const iv = intervalMs();
+if(!iv){
+el.classList.add('off');
+el.textContent = 'Auto toss is off (manual only).';
+return;
+}
+el.classList.remove('off');
+if(state.settings.nextAt == null) state.settings.nextAt = Date.now() + iv;
+
+let ms = state.settings.nextAt - Date.now();
+if(ms < 0) ms = 0;
+const s = Math.floor(ms / 1000);
+const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600);
+const m = Math.floor((s % 3600) / 60), sec = s % 60;
+const str = d > 0 ? `${d}d ${h}h ${m}m`
+: h > 0 ? `${h}h ${m}m ${sec}s`
+: m > 0 ? `${m}m ${sec}s`
+: `${sec}s`;
+el.innerHTML = `Next auto toss in <strong>${str}</strong>`;
+}
+
+/* =========================================================
+Rendering
+========================================================= */
+function render(){
+renderStats();
+renderHeadline();
+renderHistory();
+renderMilestones();
+renderProbTable();
+renderRuns();
+renderAutoControls();
+}
+
+function renderHeadline(){
+const t = state.tosses[state.tosses.length - 1];
+const line = $('resultLine');
+if(!t){
+line.textContent = 'No tosses yet — flip to begin.';
+} else {
+line.innerHTML = `Toss <b>#${t.i.toLocaleString()}</b> → <b class="${t.r}">${sideName(t.r)}</b> · ${fmtTime(t.ts)}`;
+}
+
+const { len, res } = currentStreak();
+const badge = $('streakBadge');
+badge.classList.remove('H','T');
+if(!t){
+badge.textContent = 'Current streak: —';
+} else if(len === 1){
+badge.textContent = 'Current streak: 1 (fresh run)';
+} else {
+badge.classList.add(res);
+const p = Math.pow(2, 1 - len);
+badge.innerHTML = `Current streak: <b>${len} × ${sideName(res)}</b> · ${oneIn(p)} (${fmtProb(p)})`;
+}
+}
+
+function statCard(label, value, sub, cls){
+return `<div class="stat">
+<div class="label">${label}</div>
+<div class="value ${cls||''}">${value}</div>
+<div class="sub">${sub}</div>
+</div>`;
+}
+
+function renderStats(){
+const s = computeStats();
+const N = s.total;
+const z = N ? (s.heads - s.tails) / Math.sqrt(N) : 0;
+const zAbs = Math.abs(z);
+const interp = N === 0 ? 'no data'
+: zAbs < 1.96 ? 'within normal range'
+: zAbs < 2.58 ? 'mildly unusual'
+: 'statistically unusual';
+
+const { len, res } = currentStreak();
+const curTxt = N ? `${len} × ${res === 'H' ? 'H' : 'T'}` : '—';
+const curSub = len >= 2
+? `${oneIn(Math.pow(2,1-len))} · ${fmtProb(Math.pow(2,1-len))}`
+: 'every run starts somewhere';
+
+const firstTs = state.tosses.length ? state.tosses[0].ts : null;
+
+$('stats').innerHTML = [
+statCard('Total tosses', fmtInt(N), firstTs ? 'since ' + fmtDate(firstTs) : 'start flipping'),
+statCard('Heads', fmtInt(s.heads), pct(s.heads, N) + ' · expected 50%', 'heads'),
+statCard('Tails', fmtInt(s.tails), pct(s.tails, N) + ' · expected 50%', 'tails'),
+statCard('Current streak', curTxt, curSub, 'gold'),
+statCard('Longest streaks', `H ${s.bestH} / T ${s.bestT}`,
+`${fmtInt(s.runs.length)} runs recorded`),
+statCard('Fairness (z-score)', (z >= 0 ? '+' : '') + z.toFixed(2),
+`|z| ${zAbs.toFixed(2)} → ${interp}`, Math.abs(z) < 1.96 ? 'good' : '')
+].join('');
+}
+
+function renderHistory(){
+const arr = state.tosses;
+const N = arr.length;
+const list = $('historyList');
+const strip = $('strip');
+
+// running streak at each index
+const streaks = new Array(N);
+let cr = null, cl = 0;
+for(let i = 0; i < N; i++){
+const r = arr[i].r;
+if(r === cr) cl++; else { cr = r; cl = 1; }
+streaks[i] = cl;
+}
+
+// strip: last 120
+const stripStart = Math.max(0, N - 120);
+let sh = '';
+for(let i = stripStart; i < N; i++){
+sh += `<span class="cell ${arr[i].r}" title="#${arr[i].i} ${sideName(arr[i].r)}"></span>`;
+}
+strip.innerHTML = sh || '<span class="muted">No tosses yet.</span>';
+
+// list: last 300, newest first
+const MAX = 300;
+const from = Math.max(0, N - MAX);
+let html = '';
+for(let i = N - 1; i >= from; i--){
+const t = arr[i];
+const st = streaks[i];
+html += `<div class="hrow">
+<span class="idx">#${t.i.toLocaleString()}</span>
+<span class="chip ${t.r}">${t.r}</span>
+<span class="hstreak">${st > 1 ? `streak <b>${st}</b>` : 'new run'}${t.m !== 'manual' ? ' · auto' : ''}</span>
+<span class="htime">${fmtDate(t.ts)}</span>
+</div>`;
+}
+list.innerHTML = html || '<div class="empty">Nothing logged yet. Hit “Toss coin” or set an auto frequency.</div>';
+
+$('historyMeta').textContent = N
+? `showing ${Math.min(N, MAX).toLocaleString()} of ${N.toLocaleString()}`
+: '';
+}
+
+function renderMilestones(){
+const el = $('milestones');
+const all = state.milestones;
+$('msMeta').textContent = all.length ? `${all.length} logged` : '';
+
+if(!all.length){
+el.innerHTML = '<div class="empty">No streak milestones yet.<br>A run of <b>3 in a row</b> is the first one — that happens roughly every 4 tosses.</div>';
+return;
+}
+
+const arr = all.slice(-120).reverse();
+el.innerHTML = arr.map(m => {
+const rare = m.pByNow < 0.05;
+return `<div class="ms ${m.res} ${rare ? 'rare' : ''}">
+<div class="ms-top">
+<span class="ms-title">${m.len} × ${sideName(m.res)} in a row</span>
+<span class="ms-idx">toss #${m.idx.toLocaleString()}</span>
+</div>
+<div class="ms-sub">Odds of this exact run: <b>${oneIn(m.pRun)}</b> (${fmtProb(m.pRun)})</div>
+<div class="ms-sub">Given ${m.N.toLocaleString()} tosses, chance of any ≥${m.len} run by now: <b>${fmtProb(m.pByNow)}</b></div>
+<div class="ms-sub" style="color:var(--muted)">Expected such runs so far: ${m.expectedRuns.toFixed(2)} · average wait ${fmtInt(m.expectedWait)} tosses</div>
+<div class="ms-time">${fmtDate(m.ts)}</div>
+</div>`;
+}).join('');
+}
+
+function renderProbTable(){
+const N = state.tosses.length;
+const ks = Array.from({ length:18 }, (_, i) => i + 3);
+const { len } = currentStreak();
+
+let html = `<thead><tr>
+<th>Run</th><th>Odds of it</th><th>Probability</th>
+<th>Expected by now</th><th>Chance by now</th>
+</tr></thead><tbody>`;
+
+for(const k of ks){
+const pRun = Math.pow(2, 1 - k);
+const expCount = Math.max(0, N - k + 1) * pRun;
+const pBy = N >= k ? 1 - probNoRun(N, k) : 0;
+const hit = len >= k ? ' class="hit"' : '';
+html += `<tr${hit}>
+<td>${k}</td>
+<td>${oneIn(pRun)}</td>
+<td>${fmtProb(pRun)}</td>
+<td>${expCount < 0.01 ? expCount.toFixed(4) : expCount.toFixed(2)}</td>
+<td>${fmtProb(pBy)}</td>
+</tr>`;
+}
+html += '</tbody>';
+$('probTable').innerHTML = html;
+}
+
+function expectedMaximalRuns(N, k){
+if(N < k) return 0;
+if(N === k) return Math.pow(2, 1 - N);
+return (N - k + 3) / Math.pow(2, k + 1);
+}
+
+function expectedMaximalRunsAtLeast(N, k){
+return N < k ? 0 : (N - k + 2) / Math.pow(2, k);
+}
+
+function renderRuns(){
+const s = computeStats();
+const N = s.total;
+const buckets = [1,2,3,4,5,6];
+const counts = [0,0,0,0,0,0];
+for(const r of s.runs){
+if(r.len >= 6) counts[5]++; else counts[r.len - 1]++;
+}
+const max = Math.max(1, ...counts);
+
+let html = '';
+buckets.forEach((b, i) => {
+const exp = b === 6 ? expectedMaximalRunsAtLeast(N, b) : expectedMaximalRuns(N, b);
+const w = Math.round(counts[i] / max * 100);
+const over = counts[i] > exp * 1.35 && counts[i] > 2;
+html += `<div class="run-row">
+<div class="run-head">
+<span class="lbl">${b === 6 ? '6+' : b} in a row</span>
+<span class="exp">obs <b style="color:#fff">${counts[i]}</b> · exp ≈ ${exp.toFixed(1)}</span>
+</div>
+<div class="bar"><i class="${over ? 'over' : ''}" style="width:${w}%"></i></div>
+</div>`;
+});
+$('runs').innerHTML = html;
+}
+
+function renderAutoControls(){
+$('autoEnabled').checked = state.settings.autoEnabled;
+$('freqMode').value = state.settings.mode;
+$('freqSeconds').value = state.settings.seconds;
+$('freqMinutes').value = state.settings.minutes;
+$('secondsField').hidden = state.settings.mode !== 'seconds';
+$('minutesField').hidden = state.settings.mode !== 'minutes';
+}
+
+/* =========================================================
+Toast
+========================================================= */
+function toast(m){
+const el = document.createElement('div');
+el.className = 'toast';
+el.innerHTML = `🔥 <b>${m.len} × ${sideName(m.res)} in a row</b> — toss #${m.idx.toLocaleString()}
+<div class="t-sub">Odds of this run: ${oneIn(m.pRun)} (${fmtProb(m.pRun)}) ·
+chance of any ≥${m.len} run by now: ${fmtProb(m.pByNow)}</div>`;
+$('toasts').appendChild(el);
+requestAnimationFrame(() => el.classList.add('show'));
+setTimeout(() => {
+el.classList.remove('show');
+setTimeout(() => el.remove(), 400);
+}, 5200);
+}
+
+/* =========================================================
+Events
+========================================================= */
+$('btnToss').addEventListener('click', () => doToss('manual'));
+
+$('autoEnabled').addEventListener('change', applyFrequency);
+$('freqMode').addEventListener('change', applyFrequency);
+$('freqSeconds').addEventListener('change', applyFrequency);
+$('freqSeconds').addEventListener('input', () => {
+if(state.settings.mode === 'seconds') applyFrequency();
+});
+$('freqMinutes').addEventListener('change', applyFrequency);
+$('freqMinutes').addEventListener('input', () => {
+if(state.settings.mode === 'minutes') applyFrequency();
+});
+
+function applyFrequency(){
+const mode = $('freqMode').value;
+let seconds = parseInt($('freqSeconds').value, 10);
+let mins = parseInt($('freqMinutes').value, 10);
+if(!Number.isFinite(seconds) || seconds < 1) seconds = 5;
+if(!Number.isFinite(mins) || mins < 1) mins = 60;
+seconds = Math.min(seconds, 86400);
+mins = Math.min(mins, 10080);
+
+state.settings.autoEnabled = $('autoEnabled').checked;
+state.settings.mode = mode;
+state.settings.seconds = seconds;
+state.settings.minutes = mins;
+const iv = intervalMs();
+state.settings.nextAt = iv ? Date.now() + iv : null;
+
+save();
+renderAutoControls();
+updateCountdown();
+}
+
+$('btnExport').addEventListener('click', () => {
+const payload = {
+app: 'Flipper',
+exportedAt: new Date().toISOString(),
+settings: state.settings,
+totalTosses: state.tosses.length,
+milestones: state.milestones,
+tosses: state.tosses
+};
+const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+const a = document.createElement('a');
+a.href = URL.createObjectURL(blob);
+a.download = 'flipper-' + new Date().toISOString().slice(0,10) + '.json';
+document.body.appendChild(a);
+a.click();
+a.remove();
+setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$('btnReset').addEventListener('click', () => {
+if(!confirm('Delete all toss history, milestones and settings? This cannot be undone.')) return;
+localStorage.removeItem(KEY);
+state = defaults();
+noRunCache.clear();
+rotation = 0;
+const coin = $('coin');
+coin.style.transition = 'none';
+coin.style.transform = 'rotateY(0deg)';
+requestAnimationFrame(() => { coin.style.transition = ''; });
+render();
+updateCountdown();
+});
+
+/* keyboard: space / enter = toss */
+document.addEventListener('keydown', e => {
+if(e.target.closest('button, a, input, select, textarea, [contenteditable="true"], [role="button"], [role="link"]')) return;
+if(e.code === 'Space' || e.code === 'Enter'){
+e.preventDefault();
+doToss('manual');
+}
+});
+
+/* =========================================================
+Boot
+========================================================= */
+(function init(){
+// restore the coin to the last known face, without animating
+rotation = state.lastResult === 'T' ? 180 : 0;
+const coin = $('coin');
+coin.style.transition = 'none';
+coin.style.transform = `rotateY(${rotation}deg)`;
+requestAnimationFrame(() => { coin.style.transition = ''; });
+
+renderAutoControls();
+render();
+updateCountdown();
+setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
