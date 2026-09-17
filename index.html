@@ -1156,28 +1156,25 @@ if(N === k) return Math.pow(2, 1 - N);
 return (N - k + 3) / Math.pow(2, k + 1);
 }
 
-function expectedMaximalRunsAtLeast(N, k){
-return N < k ? 0 : (N - k + 2) / Math.pow(2, k);
-}
-
 function renderRuns(){
 const s = computeStats();
 const N = s.total;
-const buckets = [1,2,3,4,5,6];
-const counts = [0,0,0,0,0,0];
+const longest = Math.max(1, s.bestH, s.bestT);
+const buckets = Array.from({ length:longest }, (_, i) => i + 1);
+const counts = new Array(longest).fill(0);
 for(const r of s.runs){
-if(r.len >= 6) counts[5]++; else counts[r.len - 1]++;
+counts[r.len - 1]++;
 }
 const max = Math.max(1, ...counts);
 
 let html = '';
 buckets.forEach((b, i) => {
-const exp = b === 6 ? expectedMaximalRunsAtLeast(N, b) : expectedMaximalRuns(N, b);
+const exp = expectedMaximalRuns(N, b);
 const w = Math.round(counts[i] / max * 100);
 const over = counts[i] > exp * 1.35 && counts[i] > 2;
 html += `<div class="run-row">
 <div class="run-head">
-<span class="lbl">${b === 6 ? '6+' : b} in a row</span>
+<span class="lbl">${b} in a row</span>
 <span class="exp">obs <b style="color:#fff">${counts[i]}</b> · exp ≈ ${exp.toFixed(1)}</span>
 </div>
 <div class="bar"><i class="${over ? 'over' : ''}" style="width:${w}%"></i></div>

@@ -100,7 +100,7 @@ $$
 E[R_k] = \frac{N-k+3}{2^{k+1}}
 $$
 
-Boundary cases and the cumulative `6+` bucket are handled separately. The fairness statistic is the standardized heads-versus-tails difference:
+The distribution displays a separate exact-length row for every value from 1 through the longest observed streak, so longer milestones are never merged into a `6+` bucket. Boundary cases are handled separately. The fairness statistic is the standardized heads-versus-tails difference:
 
 $$
 z = \frac{H-T}{\sqrt{N}}
