@@ -118,10 +118,13 @@ The dolphin icon is loaded from the jsDelivr CDN. All application logic is conta
 ```text
 Flipper/
 ├── CoinFlip.html   # Markup, styles, probability logic, and persistence
-└── README.md       # Project documentation
+├── README.md       # Project documentation
+└── NETLIFY_SETUP.md # Netlify and custom-domain deployment guide
 ```
 
 ## Deployment
+
+For step-by-step deployment using `flipper.milagro-nexus.com`, see the [Netlify setup guide](NETLIFY_SETUP.md).
 
 ### GitHub Pages
 
@@ -159,35 +162,70 @@ Flipper targets current versions of Chrome, Edge, Firefox, and Safari. It requir
 
 ## Possible Future Enhancements
 
-### Data and reliability
+The first group builds most directly on Flipper's exact probability calculations and lifetime statistics.
 
-- Import and validate previously exported JSON backups
+### Priority: statistical foundations
+
+- Add an exact two-sided binomial fairness test with a clearly explained p-value
+- Show Wilson score intervals and optional Bayesian Beta posterior credible intervals for the heads proportion
+- Add the Wald-Wolfowitz runs test and lag autocorrelation checks for independence
+- Add confidence bounds around expected maximal-run counts
+- Correct milestone significance for repeated checking and multiple comparisons
+- Chart cumulative heads proportion with a 95% interval and z-score over time
+- Plot observed versus expected run-length distributions using the exact boundary formulas
+- Add CUSUM or EWMA control charts for detecting gradual probability drift
+- Offer a sequential probability ratio test with configurable error rates for early bias detection
+- Explore waiting times for overlapping patterns such as `HTH` and `HHT`, including Penney's game
+
+For a binary outcome, the exact binomial test should be the primary fairness test. A chi-square goodness-of-fit result may be included for education or comparison when its sample-size assumptions are satisfied.
+
+### Data and persistence
+
+- Import and validate JSON or CSV through a guided preview and conflict-resolution flow
+- Merge past exports or external logs while preserving source and timestamp metadata
+- Move large histories to IndexedDB while retaining lifetime aggregates
+- Detect storage quota failures and show storage use, backup status, and visible warnings
 - Add automatic backup reminders and restore previews
-- Detect storage quota failures and show a visible warning
-- Move large histories to IndexedDB for greater capacity
 - Add optional encrypted cloud synchronization across devices
-- Provide deterministic seeded simulations for reproducible experiments
-- Offer a cryptographically secure random source where supported
+- Add session names, custom tags, and filters by date, mode, session, or tag
+- Offer an append-only audit mode with checksums or a hash chain
+- Offer an explicitly disclosed rolling retention window alongside lifetime totals
+- Record trimming events and show lifetime, retained-window, and storage totals separately
 
-### Analysis
+### Auto-toss and scheduling
 
-- Add confidence intervals and two-sided binomial tests
-- Chart cumulative heads percentage and z-score over time
-- Compare observed and expected run distributions graphically
-- Filter statistics by date range, manual versus automatic flips, or session
-- Add longest-streak timelines and milestone frequency summaries
-- Support biased-coin probability settings for experiments
-- Export summary statistics as CSV
+- Add pause and resume controls that retain the next scheduled time
+- Show a catch-up summary with the number and time span of backfilled tosses
+- Add timezone- and daylight-saving-aware daily schedules
+- Support schedules such as weekdays at 9:00 or every 90 minutes during working hours
+- Add optional milestone and auto-toss desktop notifications
+- Add optional sound and haptic feedback
+- Show clearer status when browser background throttling delays timers
+- Support an installable Progressive Web App with offline assets
+- Investigate deferred PWA catch-up or a server-backed scheduler for reliable background operation
 
-### User experience
+Browser Background Sync does not guarantee exact periodic execution, so it cannot by itself promise a flip every few seconds or at an exact wall-clock time while the app is closed.
 
-- Import data through a guided conflict-resolution flow
-- Add pause/resume controls that retain the next scheduled time
-- Provide optional sound and reduced-motion settings
-- Add theme choices and improved high-contrast styling
-- Support installable Progressive Web App behavior and offline icons
-- Add clearer status feedback when browser timer throttling occurs
+### User experience and visualization
+
+- Add a streak calendar heatmap with daily toss counts and longest streaks
+- Add milestone timelines and frequency summaries
+- Add user-defined streak milestones and notification thresholds
+- Support custom outcome labels such as Yes/No, Up/Down, or team names
+- Add an education mode explaining formulas, the law of large numbers, and the gambler's fallacy
+- Complete an accessibility pass covering ARIA labels, focus management, reduced motion, and remappable shortcuts
+- Add light, dark, and high-contrast themes
 - Add localization for labels, dates, numbers, and probability descriptions
+
+### Advanced and experimental
+
+- Add an adjustable probability mode where $p \ne 0.5$ and visualize test-detection power
+- Add Monte Carlo and randomization tests for comparison with exact results
+- Provide deterministic seeded simulations for reproducible experiments
+- Offer `crypto.getRandomValues()` as a stronger random source where supported
+- Compare multiple coins or independent sequences side by side
+- Export raw history and summaries as spreadsheet-friendly CSV
+- Add optional webhooks or an API for external milestone logging
 
 ### Platform and development
 
