@@ -9,7 +9,8 @@ Flipper is a browser-based coin-toss tracker that logs every flip, measures stre
 - Persisted auto-toss settings and countdown to the next flip
 - Catch-up for up to 500 missed scheduled tosses after reopening the page
 - Lifetime heads, tails, percentages, streaks, run counts, and fairness z-score
-- Streak milestones from 3 through 100 consecutive matching results
+- A gold-outlined record milestone that is replaced only by a strictly longer streak
+- A lifetime podium showing the three longest individual streaks
 - Exact probability that a run of each length has appeared by the current toss count
 - Expected-versus-observed maximal run distribution
 - Recent-history strip and detailed history list
