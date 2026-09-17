@@ -10,41 +10,40 @@ Use:
 https://flipper.milagro-nexus.com
 ```
 
-A subdomain is recommended because it does not replace any website or service already using `milagro-nexus.com` or `www.milagro-nexus.com`. Use the apex-domain instructions later in this guide only if Flipper should replace the main website at `https://milagro-nexus.com`.
+A subdomain is required for this deployment because it leaves the existing websites and services on `milagro-nexus.com` and `www.milagro-nexus.com` unchanged.
+
+> **Important:** Create Flipper as a new Netlify site. Do not import it into, replace, or reconfigure the existing Milagro Nexus site, which publishes `frontend/dist`.
 
 ## Before You Begin
 
 You need:
 
 - Access to the GitHub repository at `https://github.com/paoshea/Flipper`
-- A Netlify account that can connect to that private GitHub repository
-- Access to the DNS settings for `milagro-nexus.com`
-- The name of the company currently providing DNS for the domain
+- A Netlify account with permission to create sites in the `paoshea` team
+- Access to the Netlify-managed DNS zone for `milagro-nexus.com`
 
-Your registrar and DNS provider may be different companies. To find the active DNS provider, inspect the domain's nameservers in the registrar dashboard or run:
+The repository is public, the Netlify GitHub App is already installed for the `paoshea` account, and the domain already uses Netlify DNS. You can confirm the active nameservers with:
 
 ```bash
 dig NS milagro-nexus.com +short
 ```
 
-## 1. Make Flipper Load at the Site Root
+## 1. Confirm the Repository Is Ready
 
-Netlify serves `index.html` automatically at `/`. The repository currently uses `CoinFlip.html`, so rename it before deployment:
+The repository already contains `index.html` at its root. No rename or build step is required. Confirm the file is present and the working tree is current:
 
 ```bash
-git mv CoinFlip.html index.html
-git add README.md NETLIFY_SETUP.md
-git commit -m "Prepare Flipper for Netlify deployment"
-git push origin main
+git pull --ff-only origin main
+test -f index.html && echo "Flipper entry page is ready"
 ```
 
-After the rename, open `index.html` locally once to confirm the app still works:
+Open it locally once to confirm the app still works:
 
 ```bash
 open index.html
 ```
 
-If you keep the name `CoinFlip.html`, the app will be available at `/CoinFlip.html`, but the custom domain's home page may return a 404.
+Netlify serves `index.html` automatically at `/`.
 
 ## 2. Import the GitHub Repository into Netlify
 
@@ -52,8 +51,8 @@ If you keep the name `CoinFlip.html`, the app will be available at `/CoinFlip.ht
 2. Select **Add new project**.
 3. Choose **Import an existing project** or **Import from Git**.
 4. Select **GitHub** as the Git provider.
-5. Authorize the Netlify GitHub app if prompted.
-6. Grant Netlify access to the private `paoshea/Flipper` repository.
+5. Select the existing Netlify GitHub App connection. The repository is public and should already be visible.
+6. If the repository is not listed, configure the GitHub App and grant access to `paoshea/Flipper`.
 7. Select the **Flipper** repository.
 8. Configure the deployment:
 
@@ -96,39 +95,31 @@ Browser `localStorage` is scoped to each origin. History created from the local 
    ```
 
 5. Select **Verify**, then confirm **Add domain**.
-6. Choose **External DNS Provider** unless you intentionally want to move management of the entire domain to Netlify DNS.
-7. In Netlify, select **Pending DNS verification** beside the new domain.
-8. Note the customized CNAME target shown by Netlify. It normally matches the temporary site address, such as `your-site-name.netlify.app`.
+6. Netlify will detect the existing `milagro-nexus.com` DNS zone in the same team and offer to create the required record.
+7. Accept Netlify's generated DNS record for the `flipper` host.
+8. Do not alter the apex, `www`, `app`, mail, verification, or other DNS records.
 
-Do not enter `https://` or a path in a DNS record.
+The `flipper` host is currently unused, so attaching it does not replace an existing service.
 
-## 4. Configure DNS for the Subdomain
+## 4. Verify the Netlify DNS Record
 
-At the active DNS provider for `milagro-nexus.com`, add this record using the exact target shown by Netlify:
+No external DNS-provider work is required. Under the Netlify DNS zone for `milagro-nexus.com`, verify that Netlify created the record it proposed for the new site.
 
-| Type | Host/Name | Target/Value | TTL |
-| --- | --- | --- | --- |
-| `CNAME` | `flipper` | `your-site-name.netlify.app` | Automatic or 300 seconds |
-
-Important checks:
-
-- Replace `your-site-name.netlify.app` with the actual Netlify hostname.
-- Some DNS dashboards expect the full host `flipper.milagro-nexus.com`; most expect only `flipper`.
-- Remove any conflicting `A`, `AAAA`, or `CNAME` record for the `flipper` host.
-- Do not modify unrelated mail, verification, apex, or `www` records.
-- If Cloudflare manages DNS, initially set the record to **DNS only** rather than proxied until Netlify verifies the domain and provisions HTTPS.
+- Confirm `flipper.milagro-nexus.com` is assigned only to the new Flipper site.
+- Leave `milagro-nexus.com`, `www.milagro-nexus.com`, and `app.milagro-nexus.com` unchanged.
+- Do not edit the existing Milagro Nexus build command or `frontend/dist` publish directory.
 
 DNS changes often appear within minutes but can take several hours. Netlify advises allowing up to 24 hours for broad propagation.
 
 ## 5. Verify DNS and HTTPS
 
-Check the CNAME from a terminal:
+Check the DNS response from a terminal:
 
 ```bash
-dig CNAME flipper.milagro-nexus.com +short
+dig flipper.milagro-nexus.com +short
 ```
 
-The result should end with your Netlify hostname. Then verify HTTPS:
+The result should contain a Netlify-managed answer. Then verify HTTPS:
 
 ```bash
 curl -I https://flipper.milagro-nexus.com
@@ -154,7 +145,45 @@ flipper.milagro-nexus.com
 
 is the primary domain. Keep the generated `netlify.app` address as a secondary domain so Netlify can redirect it to the primary URL.
 
-## 7. Publish Future Updates
+## 7. Enable Anonymous Access
+
+The `paoshea` team currently enforces a team-wide Netlify SSO requirement. This rule takes precedence over Flipper's site-level setting, so anonymous requests return HTTP 401 even though Flipper has no site password and its own SSO flag is off.
+
+A team Owner or admin must make this change in the Netlify dashboard:
+
+1. Confirm that every other site that must remain private has its own site-level SSO protection enabled.
+2. Open **Team settings** for the `paoshea` team.
+3. Go to **Access & security > Site protection**. Netlify may label this **Visitor access** or **Netlify SSO**.
+4. Turn off the team-wide SSO or login requirement.
+5. Do not change Flipper's site-level SSO flag; it should remain off.
+
+On the current team configuration, all eleven other sites have site-level SSO enabled, while Flipper is the only site with it disabled. Removing the blanket team rule should therefore make only Flipper public. Verify that assumption immediately after the change rather than relying on configuration alone.
+
+Confirm anonymous Flipper access:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://flipper.milagro-nexus.com
+curl -s https://flipper.milagro-nexus.com | grep -o '<title>.*</title>'
+```
+
+Expected output:
+
+```text
+200
+<title>Flipper — probability-logged coin flips</title>
+```
+
+Then spot-check that the existing protected site still returns HTTP 401:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://milagro-nexus.com
+```
+
+If Flipper still returns 401 or its response mentions `edge-access`, the team-level gate remains active. If an existing private site becomes public, restore the team-wide rule immediately and verify its site-level protection before trying again.
+
+This setting cannot be changed through repository files or `netlify.toml`. A site-scoped automation token also cannot modify it.
+
+## 8. Publish Future Updates
 
 Because the site is connected to GitHub, every push to `main` triggers a production deployment:
 
@@ -166,44 +195,16 @@ git push origin main
 
 Monitor the deployment under **Deploys** in Netlify. Each pull request can also receive a temporary Deploy Preview if that feature is enabled.
 
-## Optional: Use the Apex Domain
+## Do Not Change the Apex Site
 
-Use this option only if Flipper should replace the current site at both:
+The existing Milagro Nexus application must remain available at:
 
 ```text
 https://milagro-nexus.com
 https://www.milagro-nexus.com
 ```
 
-First add `milagro-nexus.com` under **Domain management** in Netlify. Netlify normally adds `www.milagro-nexus.com` as well.
-
-With an external DNS provider, configure the exact values displayed under **Pending DNS verification**. Standard Netlify values are:
-
-| Type | Host/Name | Target/Value |
-| --- | --- | --- |
-| `ALIAS`, `ANAME`, or flattened `CNAME` | `@` | `apex-loadbalancer.netlify.com` |
-| `CNAME` | `www` | `your-site-name.netlify.app` |
-
-If the provider does not support an apex `ALIAS`, `ANAME`, or flattened CNAME, Netlify documents this fallback:
-
-| Type | Host/Name | Target/Value |
-| --- | --- | --- |
-| `A` | `@` | `75.2.60.5` |
-
-Always prefer the customized records shown in the Netlify dashboard over generic values in this guide. Changing apex or `www` records can take an existing website offline, so record the current DNS values before replacing them.
-
-## Optional: Move DNS Management to Netlify
-
-You can choose Netlify DNS instead of retaining the current DNS provider. Netlify will provide nameservers that must replace the existing nameservers at the domain registrar.
-
-Before changing nameservers:
-
-1. Copy every existing DNS record, especially `MX`, `TXT`, email authentication, verification, and service records.
-2. Recreate those records in Netlify DNS.
-3. Confirm that email and other subdomains will remain operational.
-4. Replace the nameservers at the registrar only after the Netlify zone is complete.
-
-For a single `flipper` subdomain, retaining the current DNS provider and adding one CNAME is usually simpler and lower risk.
+Do not attach either hostname to the Flipper site. Do not modify `app.milagro-nexus.com`, the Milagro Nexus build command, or its `frontend/dist` publish directory. Flipper is an independent sibling site using only `flipper.milagro-nexus.com`.
 
 ## Troubleshooting
 
@@ -211,16 +212,23 @@ For a single `flipper` subdomain, retaining the current DNS provider and adding 
 
 Confirm that the deployed repository contains `index.html` at its root and that the Netlify publish directory is `.`.
 
-### Netlify cannot see the private repository
+### Netlify cannot see the repository
 
-In GitHub, review the installed Netlify GitHub app and grant it access to `paoshea/Flipper`, then retry the import.
+The repository is public. If it is absent from the import list, review the installed Netlify GitHub App and grant it access to `paoshea/Flipper`, then retry.
+
+### Site creation returns HTTP 401
+
+A site-scoped agent token cannot create another Netlify site or modify the shared DNS zone. Sign in to the Netlify UI as a `paoshea` team member with site-creation and DNS permissions. Alternatively, use a Netlify personal access token belonging to a team Owner. Do not reuse or reconfigure the existing Milagro Nexus site as a workaround.
+
+### The deployed site returns HTTP 401
+
+If the custom domain, generated `netlify.app` URL, branch URL, and deploy permalink all return Netlify's `edge-access` challenge, the team-wide visitor protection rule is still active. Follow **Enable Anonymous Access** above. Changing DNS, redeploying, or adding headers will not remove this gate.
 
 ### DNS verification remains pending
 
-- Open **Pending DNS verification** and compare every value with the DNS provider.
-- Remove conflicting records for the same host.
-- Confirm that the CNAME target does not contain `https://`.
-- Run `dig CNAME flipper.milagro-nexus.com +short`.
+- Open the `milagro-nexus.com` zone in Netlify DNS and confirm the generated `flipper` record exists.
+- Confirm the custom domain is assigned to the Flipper site and no other site.
+- Run `dig flipper.milagro-nexus.com +short`.
 - Allow up to 24 hours before escalating.
 
 ### HTTPS provisioning fails
@@ -228,7 +236,6 @@ In GitHub, review the installed Netlify GitHub app and grant it access to `paosh
 - Confirm that DNS points only to the expected Netlify target.
 - Check for restrictive `CAA` records that do not allow Let's Encrypt.
 - Review **Domain management > HTTPS** for the exact error.
-- If using Cloudflare, keep the CNAME set to **DNS only** during verification.
 
 ### Auto flips pause in the background
 
@@ -242,5 +249,5 @@ This is expected when changing from the local file or temporary Netlify address.
 
 - [Deploy an existing project](https://docs.netlify.com/start/quickstarts/deploy-from-repository/)
 - [Assign a domain to a Netlify site](https://docs.netlify.com/manage/domains/manage-domains/assign-a-domain-to-your-site-app/)
-- [Configure external DNS](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/)
+- [Netlify DNS](https://docs.netlify.com/manage/domains/why-netlify-dns/)
 - [Netlify HTTPS certificates](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/)

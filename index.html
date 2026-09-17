@@ -371,10 +371,7 @@ loaded.milestones = loaded.milestones.map(m => ({
 ...m,
 expectedWait: Math.pow(2, m.len) - 1
 }));
-if(loaded.milestones.length){
-const recordLength = Math.max(...loaded.milestones.map(m => m.len));
-loaded.milestones = [loaded.milestones.find(m => m.len === recordLength)];
-}
+loaded.milestones = rebuildMilestones(loaded.tosses);
 return loaded;
 }catch(e){ return defaults(); }
 }
@@ -389,6 +386,7 @@ lastResult: state.lastResult
 }catch(e){ /* quota exceeded — silently keep in memory */ }
 }
 
+const noRunCache = new Map();
 let state = load();
 let rotation = 0;
 let lastMilestone = null;
@@ -396,8 +394,6 @@ let lastMilestone = null;
 /* =========================================================
 Probability helpers
 ========================================================= */
-const noRunCache = new Map();
-
 /**
 * Exact probability that NO run of k consecutive identical results
 * appears in n fair-coin tosses.
@@ -494,6 +490,33 @@ for(let i = t.length - 1; i >= 0 && t[i].r === res; i--) len++;
 return { len, res };
 }
 
+function milestoneFor(t, len, N){
+const pRun = Math.pow(2, 1 - len);
+return {
+id: idx0(t) + '-' + len,
+ts: t.ts, len, res:t.r, N, idx:t.i,
+pRun,
+pByNow: 1 - probNoRun(N, len),
+expectedRuns: Math.max(0, N - len + 1) * pRun,
+expectedWait: Math.pow(2, len) - 1
+};
+}
+
+function rebuildMilestones(tosses){
+const latestByLength = new Map();
+let previous = null;
+let streakLength = 0;
+for(let i = 0; i < tosses.length; i++){
+const toss = tosses[i];
+streakLength = toss.r === previous ? streakLength + 1 : 1;
+previous = toss.r;
+if(streakLength >= 4){
+latestByLength.set(streakLength, milestoneFor(toss, streakLength, i + 1));
+}
+}
+return [...latestByLength.values()].sort((a, b) => b.len - a.len);
+}
+
 /* =========================================================
 Toss engine
 ========================================================= */
@@ -513,21 +536,12 @@ return t;
 
 function checkMilestone(t){
 const { len, res } = currentStreak();
-const record = state.milestones[0];
-if(len < 3 || (record && len <= record.len)) return;
+if(len < 4) return;
 
-const N = state.tosses.length;
-const pRun = Math.pow(2, 1 - len); // P(this exact run of `len` identical)
-const pByNow = 1 - probNoRun(N, len); // P(any run ≥ len somewhere in N tosses)
-const expectedRuns = Math.max(0, N - len + 1) * pRun;
-const expectedWait = Math.pow(2, len) - 1; // mean tosses until either side reaches `len`
-
-const m = {
-id: idx0(t) + '-' + len,
-ts: t.ts, len, res, N, idx: t.i,
-pRun, pByNow, expectedRuns, expectedWait
-};
-state.milestones = [m];
+const m = milestoneFor(t, len, state.tosses.length);
+state.milestones = state.milestones.filter(existing => existing.len !== len);
+state.milestones.push(m);
+state.milestones.sort((a, b) => b.len - a.len);
 lastMilestone = m;
 }
 function idx0(t){ return t.i; }
@@ -761,16 +775,17 @@ $('historyMeta').textContent = N
 function renderMilestones(){
 const el = $('milestones');
 const all = state.milestones;
-$('msMeta').textContent = all.length ? 'current record' : '';
+$('msMeta').textContent = all.length ? `${all.length} levels retained` : '';
 
 if(!all.length){
-el.innerHTML = '<div class="empty">No streak milestones yet.<br>A run of <b>3 in a row</b> is the first one — that happens roughly every 4 tosses.</div>';
+el.innerHTML = '<div class="empty">No streak milestones yet.<br>The latest run at each length is retained from <b>4 in a row</b> upward.</div>';
 return;
 }
 
 el.innerHTML = all.map(m => {
 const rare = m.pByNow < 0.05;
-return `<div class="ms record ${m.res} ${rare ? 'rare' : ''}">
+const record = m.len === all[0].len;
+return `<div class="ms ${record ? 'record' : ''} ${m.res} ${rare ? 'rare' : ''}">
 <div class="ms-top">
 <span class="ms-title">${m.len} × ${sideName(m.res)} in a row</span>
 <span class="ms-idx">toss #${m.idx.toLocaleString()}</span>

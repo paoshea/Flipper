@@ -9,7 +9,8 @@ Flipper is a browser-based coin-toss tracker that logs every flip, measures stre
 - Persisted auto-toss settings and countdown to the next flip
 - Catch-up for up to 500 missed scheduled tosses after reopening the page
 - Lifetime heads, tails, percentages, streaks, run counts, and fairness z-score
-- A gold-outlined record milestone that is replaced only by a strictly longer streak
+- Latest milestone details for every achieved streak length from 4 through the record
+- A gold outline identifying the highest retained streak
 - A lifetime podium showing the three longest individual streaks
 - Exact probability that a run of each length has appeared by the current toss count
 - Expected-versus-observed maximal run distribution
@@ -29,12 +30,12 @@ No installation is required.
    cd Flipper
    ```
 
-2. Open `CoinFlip.html` in a modern browser.
+2. Open `index.html` in a modern browser.
 
 On macOS, you can also run:
 
 ```bash
-open CoinFlip.html
+open index.html
 ```
 
 ## Using Flipper
@@ -112,13 +113,13 @@ Flipper stores its state in browser `localStorage` under the legacy key `daily-t
 - Exported JSON files provide a portable backup, but importing is not yet supported.
 - Browser storage quotas vary. Very large histories may eventually exceed the available quota.
 
-The dolphin icon is loaded from the jsDelivr CDN. All application logic is contained in `CoinFlip.html`.
+The dolphin icon is loaded from the jsDelivr CDN. All application logic is contained in `index.html`.
 
 ## Project Structure
 
 ```text
 Flipper/
-├── CoinFlip.html   # Markup, styles, probability logic, and persistence
+├── index.html      # Markup, styles, probability logic, and persistence
 ├── README.md       # Project documentation
 └── NETLIFY_SETUP.md # Netlify and custom-domain deployment guide
 ```
@@ -135,7 +136,7 @@ For step-by-step deployment using `flipper.milagro-nexus.com`, see the [Netlify 
 4. Select the `main` branch and `/ (root)` folder.
 5. Save the configuration.
 
-The current page will be available at a URL ending in `/CoinFlip.html`. Rename the file to `index.html` before publishing if Flipper should load at the site root.
+Netlify and GitHub Pages serve `index.html` automatically at the site root.
 
 ### Custom domain
 
@@ -230,7 +231,6 @@ Browser Background Sync does not guarantee exact periodic execution, so it canno
 
 ### Platform and development
 
-- Rename `CoinFlip.html` to `index.html` for root-path hosting
 - Self-host the dolphin icon to remove the CDN dependency
 - Add unit tests for recurrences, milestone detection, and migrations
 - Add browser tests for persistence, keyboard behavior, and auto tossing
